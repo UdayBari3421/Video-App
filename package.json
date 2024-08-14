@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "A Full Stack Video And Post App",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon src/index.js"
   },
   "repository": {
     "type": "git",
@@ -18,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/UdayBari3421/Video-App/issues"
   },
-  "homepage": "https://github.com/UdayBari3421/Video-App#readme"
+  "homepage": "https://github.com/UdayBari3421/Video-App#readme",
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
 }
