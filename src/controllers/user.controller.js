@@ -4,6 +4,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
+import { v2 as cloudinary } from "cloudinary";
+import mongoose from "mongoose";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -21,16 +23,15 @@ const generateAccessAndRefereshTokens = async (userId) => {
       "Something went wrong while generating referesh and access token"
     );
   }
-};
+}; // fine
 
-const deleteOldAvatar = async (avatarUrl) => {
-  const publicId = avatarUrl.split("/").pop().split(".")[0];
+const deleteOldAvatar = async (imgUrl) => {
+  const publicId = imgUrl?.split("/").pop().split(".")[0];
   await cloudinary.uploader.destroy(publicId);
-};
+}; // fine
 
 const registerUser = asyncHandler(async (req, res) => {
   const { username, email, fullName, password } = req.body;
-  //   console.log("email:", email);
 
   if (
     [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -88,7 +89,7 @@ const registerUser = asyncHandler(async (req, res) => {
   return res
     .status(201)
     .json(new ApiResponse(200, createdUser, "User Created Successfully"));
-});
+}); // fine
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
@@ -141,7 +142,7 @@ const loginUser = asyncHandler(async (req, res) => {
         "User logged in successfully"
       )
     );
-});
+}); // fine
 
 const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
@@ -164,7 +165,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User logged out successfully"));
-});
+}); // fine
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
@@ -213,12 +214,12 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   } catch (error) {
     throw new ApiError(401, error?.message || "Invalid Refresh Token");
   }
-});
+}); // fine
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   const user = await User.findById(req.user._id);
-  const isPasswordCorrect = await user.isPasswordValid(oldPassword);
+  const isPasswordCorrect = await user.validatePassword(oldPassword);
 
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Invalid password");
@@ -231,13 +232,13 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, {}, "Password changed successfully"));
-});
+}); // fine
 
 const getCurrentUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, req.user, "User details fetched successfully"));
-});
+}); // fine
 
 const updateUser = asyncHandler(async (req, res) => {
   const { fullName, email } = req.body;
@@ -259,8 +260,8 @@ const updateUser = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "User details updated successfully"));
-});
+    .json(new ApiResponse(200, {}, "User updated successfully"));
+}); // fine
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
   const localPath = req.file?.path;
@@ -273,8 +274,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while uploading avatar");
   }
 
-  // TODO: Test And Cheak delete old avatar from cloudinary function is working or not
-  deleteOldAvatar(req.user.avatar);
+  await deleteOldAvatar(req.user.avatar);
 
   const user = await User.findByIdAndUpdate(
     req.user._id,
@@ -289,14 +289,17 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, user, "Avatar updated successfully"));
-});
+}); // fine
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
   const localPath = req.file?.path;
   if (!localPath) {
-    throw new ApiError(400, "Avatar file is required");
+    throw new ApiError(400, "Cover Image is required");
   }
+
   const coverImage = await uploadOnCloudinary(localPath);
+  //   console.log("localPath:", localPath);
+  //   console.log("req.user.coverImage:", req.user?.coverImage);
 
   if (!coverImage.url) {
     throw new ApiError(500, "Something went wrong while uploading avatar");
@@ -306,16 +309,18 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     req.user._id,
     {
       $set: {
-        avatar: coverImage.url,
+        coverImage: coverImage.url,
       },
     },
     { new: true }
   ).select("-password");
 
+  await deleteOldAvatar(req.user?.coverImage);
+
   return res
     .status(200)
     .json(new ApiResponse(200, user, "Cover Image updated successfully"));
-});
+}); // fine
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
@@ -380,14 +385,12 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Channel not found");
   }
 
-  console.log("channel:", channel);
-
   return res
     .status(200)
     .json(
       new ApiResponse(200, channel[0], "User Channel fetched successfully")
     );
-});
+}); // fine
 
 const getWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
@@ -441,7 +444,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         "Watch History fetched successfully"
       )
     );
-});
+}); // fine
 
 export {
   registerUser,
